@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////
 //
 // SFML - Simple and Fast Multimedia Library
-// Copyright (C) 2007-2018 Laurent Gomila (laurent@sfml-dev.org)
+// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
 // In no event will the authors be held liable for any damages arising from the use of this software.
@@ -366,6 +366,13 @@ const Glyph& Font::getGlyph(Uint32 codePoint, unsigned int characterSize, bool b
 
 
 ////////////////////////////////////////////////////////////
+bool Font::hasGlyph(Uint32 codePoint) const
+{
+    return FT_Get_Char_Index(static_cast<FT_Face>(m_face), codePoint) != 0;
+}
+
+
+////////////////////////////////////////////////////////////
 float Font::getKerning(Uint32 first, Uint32 second, unsigned int characterSize) const
 {
     // Special case where first or second is 0 (null character)
@@ -601,7 +608,7 @@ Glyph Font::loadGlyph(Uint32 codePoint, unsigned int characterSize, bool bold, f
     {
         // Leave a small padding around characters, so that filtering doesn't
         // pollute them with pixels from neighbors
-        const unsigned int padding = 1;
+        const unsigned int padding = 2;
 
         width += 2 * padding;
         height += 2 * padding;
@@ -777,17 +784,22 @@ bool Font::setCurrentSize(unsigned int characterSize) const
                 err() << "Failed to set bitmap font size to " << characterSize << std::endl;
                 err() << "Available sizes are: ";
                 for (int i = 0; i < face->num_fixed_sizes; ++i)
-                    err() << face->available_sizes[i].height << " ";
+                {
+                    const unsigned int size = (face->available_sizes[i].y_ppem + 32) >> 6;
+                    err() << size << " ";
+                }
                 err() << std::endl;
+            }
+            else
+            {
+                err() << "Failed to set font size to " << characterSize << std::endl;
             }
         }
 
         return result == FT_Err_Ok;
     }
-    else
-    {
-        return true;
-    }
+
+     return true;
 }
 
 
